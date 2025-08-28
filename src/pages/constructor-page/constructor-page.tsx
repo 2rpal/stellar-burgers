@@ -1,15 +1,20 @@
-import { useSelector } from '../../services/store';
-
+import { FC, useEffect } from 'react';
 import styles from './constructor-page.module.css';
-
-import { BurgerIngredients } from '../../components';
-import { BurgerConstructor } from '../../components';
-import { Preloader } from '../../components/ui';
-import { FC } from 'react';
+import { BurgerIngredients, BurgerConstructor } from '@components';
+import { Preloader } from '@ui';
+import { useDispatch, useSelector } from '../../services/store';
+import {
+  fetchIngredients,
+  selectIngredientsLoading
+} from '../../services/slices/ingredientsSlice';
 
 export const ConstructorPage: FC = () => {
-  /** TODO: взять переменную из стора */
-  const isIngredientsLoading = false;
+  const dispatch = useDispatch();
+  const isIngredientsLoading = useSelector(selectIngredientsLoading);
+
+  useEffect(() => {
+    dispatch(fetchIngredients());
+  }, [dispatch]);
 
   return (
     <>
@@ -31,3 +36,5 @@ export const ConstructorPage: FC = () => {
     </>
   );
 };
+
+export default ConstructorPage;
