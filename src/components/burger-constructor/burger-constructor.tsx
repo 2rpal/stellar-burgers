@@ -1,18 +1,26 @@
 import { FC, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from '../../services/store';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { TConstructorIngredient } from '@utils-types';
 import { BurgerConstructorUI } from '@ui';
-import { selectConstructorItems } from '../../services/slices/constructorSlice';
+import {
+  selectConstructorItems,
+  removeIngredient,
+  clear as clearConstructor
+} from '../../services/slices/constructorSlice';
 import {
   selectOrderRequest,
   selectOrderModalData,
   placeOrderThunk,
   closeOrderModal
 } from '../../services/slices/orderSlice';
-import { selectIsAuthed } from '../../services/selectors/auth';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { selectIsAuthed } from '../../services/slices/authSlice';
 
 export const BurgerConstructor: FC = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const raw = useSelector(selectConstructorItems);
   const bun = raw?.bun ?? null;
   const fills: TConstructorIngredient[] = raw?.ingredients ?? [];
@@ -21,9 +29,6 @@ export const BurgerConstructor: FC = () => {
   const orderModalData = useSelector(selectOrderModalData) ?? null;
 
   const isAuthed = useSelector(selectIsAuthed);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const location = useLocation();
 
   const onOrderClick = useCallback(() => {
     if (!bun || orderRequest) return;
@@ -32,20 +37,24 @@ export const BurgerConstructor: FC = () => {
       return;
     }
     const ids = [bun._id, ...fills.map((i) => i._id), bun._id];
-    dispatch(placeOrderThunk(ids));
+    dispatch(placeOrderThunk(ids))
+      .unwrap()
+      .then(() => dispatch(clearConstructor()));
   }, [bun, fills, orderRequest, isAuthed, navigate, location, dispatch]);
+
+  const onRemoveIngredient = useCallback(
+    (id: string) => {
+      dispatch(removeIngredient({ id }));
+    },
+    [dispatch]
+  );
 
   const closeOrderModalCb = useCallback(() => {
     dispatch(closeOrderModal());
   }, [dispatch]);
 
   const price = useMemo(
-    () =>
-      (bun ? bun.price * 2 : 0) +
-      (fills ?? []).reduce(
-        (s: number, v: TConstructorIngredient) => s + v.price,
-        0
-      ),
+    () => (bun ? bun.price * 2 : 0) + fills.reduce((s, v) => s + v.price, 0),
     [bun, fills]
   );
 
@@ -59,6 +68,7 @@ export const BurgerConstructor: FC = () => {
       orderModalData={orderModalData}
       onOrderClick={onOrderClick}
       closeOrderModal={closeOrderModalCb}
+      onRemoveIngredient={onRemoveIngredient}
     />
   );
 };

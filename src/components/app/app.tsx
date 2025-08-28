@@ -1,4 +1,14 @@
 import {
+  useLocation,
+  useNavigate,
+  Routes,
+  Route,
+  Location
+} from 'react-router-dom';
+import '../../index.css';
+import styles from './app.module.css';
+
+import {
   ConstructorPage,
   Feed,
   Login,
@@ -10,11 +20,6 @@ import {
   NotFound404
 } from '@pages';
 
-import '../../index.css';
-import styles from './app.module.css';
-
-import { Route, Routes } from 'react-router-dom';
-
 import {
   AppHeader,
   Modal,
@@ -23,74 +28,91 @@ import {
   PrivateComponent
 } from '@components';
 
-const App = () => (
-  <div className={styles.app}>
-    <AppHeader />
+const App = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
 
-    <Routes>
-      {/* публичные страницы */}
-      <Route path='/' element={<ConstructorPage />} />
-      <Route path='/feed' element={<Feed />} />
+  const state = location.state as { background?: Location } | undefined;
+  const background = state?.background;
 
-      {/* страницы авторизации (пока без гостевых гардов) */}
-      <Route path='/login' element={<Login />} />
-      <Route path='/register' element={<Register />} />
-      <Route path='/forgot-password' element={<ForgotPassword />} />
-      <Route path='/reset-password' element={<ResetPassword />} />
+  const closeModal = () => navigate(-1);
 
-      {/* «защищённые» разделы (сейчас PrivateComponent — заглушка) */}
-      <Route
-        path='/profile'
-        element={
-          <PrivateComponent>
-            <Profile />
-          </PrivateComponent>
-        }
-      />
-      <Route
-        path='/profile/orders'
-        element={
-          <PrivateComponent>
-            <ProfileOrders />
-          </PrivateComponent>
-        }
-      />
+  return (
+    <div className={styles.app}>
+      <AppHeader />
 
-      {/* МОДАЛЬНЫЕ МАРШРУТЫ */}
-      <Route
-        path='/feed/:number'
-        element={
-          <Modal title='Детали заказа' onClose={() => window.history.back()}>
-            <OrderInfo />
-          </Modal>
-        }
-      />
-      <Route
-        path='/ingredients/:id'
-        element={
-          <Modal
-            title='Детали ингредиента'
-            onClose={() => window.history.back()}
-          >
-            <IngredientDetails />
-          </Modal>
-        }
-      />
-      <Route
-        path='/profile/orders/:number'
-        element={
-          <PrivateComponent>
-            <Modal title='Детали заказа' onClose={() => window.history.back()}>
+      <Routes location={background || location}>
+        <Route path='/' element={<ConstructorPage />} />
+        <Route path='/feed' element={<Feed />} />
+
+        <Route path='/login' element={<Login />} />
+        <Route path='/register' element={<Register />} />
+        <Route path='/forgot-password' element={<ForgotPassword />} />
+        <Route path='/reset-password' element={<ResetPassword />} />
+
+        <Route
+          path='/profile'
+          element={
+            <PrivateComponent>
+              <Profile />
+            </PrivateComponent>
+          }
+        />
+        <Route
+          path='/profile/orders'
+          element={
+            <PrivateComponent>
+              <ProfileOrders />
+            </PrivateComponent>
+          }
+        />
+
+        <Route path='/feed/:number' element={<OrderInfo />} />
+        <Route path='/ingredients/:id' element={<IngredientDetails />} />
+        <Route
+          path='/profile/orders/:number'
+          element={
+            <PrivateComponent>
               <OrderInfo />
-            </Modal>
-          </PrivateComponent>
-        }
-      />
+            </PrivateComponent>
+          }
+        />
 
-      {/* 404 */}
-      <Route path='*' element={<NotFound404 />} />
-    </Routes>
-  </div>
-);
+        <Route path='*' element={<NotFound404 />} />
+      </Routes>
+
+      {background && (
+        <Routes>
+          <Route
+            path='/feed/:number'
+            element={
+              <Modal title='Детали заказа' onClose={closeModal}>
+                <OrderInfo />
+              </Modal>
+            }
+          />
+          <Route
+            path='/ingredients/:id'
+            element={
+              <Modal title='Детали ингредиента' onClose={closeModal}>
+                <IngredientDetails />
+              </Modal>
+            }
+          />
+          <Route
+            path='/profile/orders/:number'
+            element={
+              <PrivateComponent>
+                <Modal title='Детали заказа' onClose={closeModal}>
+                  <OrderInfo />
+                </Modal>
+              </PrivateComponent>
+            }
+          />
+        </Routes>
+      )}
+    </div>
+  );
+};
 
 export default App;
